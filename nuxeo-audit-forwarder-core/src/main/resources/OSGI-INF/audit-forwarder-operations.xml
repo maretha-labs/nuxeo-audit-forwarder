@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<component name="io.maretha.audit.forwarder.operations" version="1.0">
+
+  <extension target="org.nuxeo.ecm.core.operation.OperationServiceComponent" point="operations">
+    <operation class="io.maretha.audit.forwarder.operation.GetSettings" />
+    <operation class="io.maretha.audit.forwarder.operation.SaveSettings" />
+    <operation class="io.maretha.audit.forwarder.operation.ListAuditableEvents" />
+    <operation class="io.maretha.audit.forwarder.operation.ListSinks" />
+    <operation class="io.maretha.audit.forwarder.operation.TestSink" />
+  </extension>
+
+</component>

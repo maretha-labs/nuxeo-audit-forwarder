@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<component name="io.maretha.audit.forwarder.config" version="1.0">
+
+  <documentation>
+    The only place that names the global nuxeo.conf keys and their defaults. Each value is expanded from nuxeo.conf
+    at deployment with the runtime ${key:=default} syntax. Sink settings are open-ended, so they are read at startup
+    from every nuxeo.conf key that starts with the sink property prefix declared here.
+  </documentation>
+
+  <require>io.maretha.audit.forwarder.AuditForwarderService</require>
+
+  <extension target="io.maretha.audit.forwarder.AuditForwarderService" point="configuration">
+    <forwarder>
+      <enabled>${maretha.audit.forwarder.enabled:=false}</enabled>
+      <sinks>${maretha.audit.forwarder.sinks:=}</sinks>
+      <defaultEvents>${maretha.audit.forwarder.events.default:=documentCreated,documentCreatedByCopy,documentDuplicated,documentMoved,documentRemoved,documentModified,documentLocked,documentUnlocked,documentSecurityUpdated,lifecycle_transition_event,loginSuccess,loginFailed,logout,documentCheckedIn,versionRemoved,documentProxyPublished,download}</defaultEvents>
+      <excludePrincipals>${maretha.audit.forwarder.exclude.principals:=system}</excludePrincipals>
+      <sourceHost>${maretha.audit.forwarder.source.host:=}</sourceHost>
+      <settingsCacheSeconds>${maretha.audit.forwarder.settings.cache.seconds:=30}</settingsCacheSeconds>
+      <sinkPropertyPrefix>maretha.audit.forwarder.sink.</sinkPropertyPrefix>
+    </forwarder>
+  </extension>
+
+</component>

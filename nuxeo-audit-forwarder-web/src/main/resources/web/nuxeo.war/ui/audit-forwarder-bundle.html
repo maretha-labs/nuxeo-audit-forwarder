@@ -1,0 +1,22 @@
+<link rel="import" href="audit-forwarder/audit-forwarder-admin.html">
+
+<nuxeo-slot-content name="auditForwarderPage" slot="PAGES">
+  <template>
+    <nuxeo-filter user="[[user]]" expression="user && user.isAdministrator">
+      <template>
+        <audit-forwarder-admin name="audit-forwarder"></audit-forwarder-admin>
+      </template>
+    </nuxeo-filter>
+  </template>
+</nuxeo-slot-content>
+
+<nuxeo-slot-content name="auditForwarderMenu" slot="ADMINISTRATION_MENU">
+  <template>
+    <nuxeo-filter user="[[user]]" expression="user && user.isAdministrator">
+      <template>
+        <nuxeo-menu-item name="audit-forwarder" label="Audit Forwarder" route="page:audit-forwarder">
+        </nuxeo-menu-item>
+      </template>
+    </nuxeo-filter>
+  </template>
+</nuxeo-slot-content>

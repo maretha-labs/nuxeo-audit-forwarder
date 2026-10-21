@@ -1,0 +1,21 @@
+<package type="addon" name="nuxeo-audit-forwarder" version="@VERSION@">
+  <title>Nuxeo Audit Forwarder</title>
+  <description>
+    <p>Forwards Nuxeo audit events to Splunk, IBM QRadar, Microsoft Sentinel, syslog, an authenticated HTTPS webhook
+      and Amazon SQS. Destinations are configured in nuxeo.conf (maretha.audit.forwarder.*); the forwarded events are
+      chosen from the Web UI administration menu.</p>
+  </description>
+  <vendor>Maretha.io</vendor>
+  <installer restart="true" />
+  <uninstaller restart="true" />
+  <nuxeo-validation>none</nuxeo-validation>
+  <production-state>testing</production-state>
+  <supported>false</supported>
+  <target-platform>
+    <name>lts</name>
+    <version>[2025.0,2027.0)</version>
+  </target-platform>
+  <license>Apache License, Version 2.0</license>
+  <license-url>https://www.apache.org/licenses/LICENSE-2.0</license-url>
+  <visibility>PRIVATE</visibility>
+</package>

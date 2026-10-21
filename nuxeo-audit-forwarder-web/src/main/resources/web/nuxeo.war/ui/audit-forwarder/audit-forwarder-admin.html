@@ -1,0 +1,276 @@
+<!--
+  Copyright 2026 Maretha Solutions
+  SPDX-License-Identifier: Apache-2.0
+
+  Administration page: sink status and test sends, plus the forwarded event selection.
+  Credentials are never shown: the operations do not return them.
+-->
+<dom-module id="audit-forwarder-admin">
+  <template>
+    <style include="nuxeo-styles">
+      :host {
+        display: block;
+      }
+
+      .cards > * {
+        display: block;
+        margin-bottom: 16px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 8px;
+        border-bottom: 1px solid var(--nuxeo-border, #e3e3e3);
+        vertical-align: top;
+      }
+
+      th {
+        font-weight: 600;
+      }
+
+      .target {
+        font-family: monospace;
+        word-break: break-all;
+      }
+
+      .dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 6px;
+        background-color: var(--nuxeo-validated, #2e7d32);
+      }
+
+      .dot.failing {
+        background-color: var(--nuxeo-warn-text, #c62828);
+      }
+
+      .dot.idle {
+        background-color: #9e9e9e;
+      }
+
+      .error {
+        color: var(--nuxeo-warn-text, #c62828);
+        font-size: 0.9em;
+        margin-top: 4px;
+      }
+
+      .hint {
+        opacity: 0.8;
+        font-size: 0.9em;
+      }
+
+      .actions {
+        margin-top: 16px;
+      }
+    </style>
+
+    <nuxeo-operation id="getSettings" op="AuditForwarder.GetSettings"></nuxeo-operation>
+    <nuxeo-operation id="saveSettings" op="AuditForwarder.SaveSettings"></nuxeo-operation>
+    <nuxeo-operation id="listEvents" op="AuditForwarder.ListAuditableEvents"></nuxeo-operation>
+    <nuxeo-operation id="listSinks" op="AuditForwarder.ListSinks"></nuxeo-operation>
+    <nuxeo-operation id="testSink" op="AuditForwarder.TestSink"></nuxeo-operation>
+
+    <nuxeo-page>
+      <div slot="header">
+        <span>Audit Forwarder</span>
+      </div>
+
+      <div class="cards">
+        <nuxeo-card heading="Destinations">
+          <template is="dom-if" if="[[!enabled]]">
+            <p class="hint">The audit forwarder is disabled. Set maretha.audit.forwarder.enabled=true and declare sinks in nuxeo.conf, then restart.</p>
+          </template>
+          <template is="dom-if" if="[[enabled]]">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Target</th>
+                  <th>Sent</th>
+                  <th>Dropped</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <template is="dom-repeat" items="[[sinks]]" as="sink">
+                  <tr>
+                    <td>[[sink.name]]</td>
+                    <td>[[sink.type]]</td>
+                    <td class="target">[[sink.target]]</td>
+                    <td>[[sink.sent]]</td>
+                    <td>[[sink.dropped]]</td>
+                    <td>
+                      <span class$="dot [[_statusClass(sink)]]"></span>[[_statusText(sink)]]
+                      <template is="dom-if" if="[[sink.lastError]]">
+                        <div class="error">[[sink.lastError]] ([[sink.lastErrorAt]])</div>
+                      </template>
+                    </td>
+                    <td>
+                      <paper-button noink sink="[[sink.name]]" on-tap="_test">
+                        Send test event
+                      </paper-button>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </template>
+          <p class="hint">Destinations and their credentials are configured in nuxeo.conf (maretha.audit.forwarder.*). Counters reset when the server restarts.</p>
+          <div class="actions">
+            <paper-button noink on-tap="_loadSinks">Refresh</paper-button>
+          </div>
+        </nuxeo-card>
+
+        <nuxeo-card heading="Forwarded events">
+          <nuxeo-selectivity label="Events" multiple min-chars="0"
+                             data="[[eventOptions]]" value="{{selected}}" stay-open-on-select>
+          </nuxeo-selectivity>
+          <p class="hint">* forwards every audited event. A sink can narrow this list with its own events setting.</p>
+          <p class="hint">[[_savedText(settings)]]</p>
+          <div class="actions">
+            <paper-button class="primary" on-tap="_save">Save selection</paper-button>
+          </div>
+        </nuxeo-card>
+      </div>
+    </nuxeo-page>
+
+    <paper-toast id="toast"></paper-toast>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'audit-forwarder-admin',
+
+      // labels are inline English: no i18n file to merge, so the add-on also deploys without the Web UI
+      _messages: {
+        saved: 'Event selection saved',
+        testOk: 'Test event delivered to {0} in {1} ms',
+        testFailed: 'Test event to {0} failed: {1}',
+        statusOk: 'OK',
+        statusFailing: 'Failing',
+        statusIdle: 'No delivery yet',
+        eventsSaved: 'Saved by {0} at {1}.',
+        eventsDefault: 'Using the default from nuxeo.conf until a selection is saved.',
+        error: 'Request failed: {0}',
+      },
+
+      properties: {
+        visible: {
+          type: Boolean,
+          observer: '_visibleChanged',
+        },
+        enabled: {
+          type: Boolean,
+          value: false,
+        },
+        sinks: {
+          type: Array,
+          value: () => [],
+        },
+        settings: Object,
+        selected: {
+          type: Array,
+          value: () => [],
+        },
+        eventOptions: {
+          type: Array,
+          value: () => [],
+        },
+      },
+
+      _visibleChanged(visible) {
+        if (visible) {
+          this._load();
+        }
+      },
+
+      _load() {
+        this.$.listEvents.params = {};
+        this.$.listEvents.execute().then((events) => {
+          this.eventOptions = ['*'].concat(events);
+        }).catch((e) => this._error(e));
+        this.$.getSettings.params = {};
+        this.$.getSettings.execute().then((settings) => this._applySettings(settings)).catch((e) => this._error(e));
+        this._loadSinks();
+      },
+
+      _loadSinks() {
+        this.$.listSinks.params = {};
+        this.$.listSinks.execute().then((sinks) => {
+          this.sinks = sinks;
+        }).catch((e) => this._error(e));
+      },
+
+      _applySettings(settings) {
+        this.settings = settings;
+        this.enabled = settings.enabled;
+        this.selected = settings.events.slice();
+      },
+
+      _save() {
+        this.$.saveSettings.params = { events: this.selected || [] };
+        this.$.saveSettings.execute().then((settings) => {
+          this._applySettings(settings);
+          this._toast(this._msg('saved'));
+        }).catch((e) => this._error(e));
+      },
+
+      _test(e) {
+        const sink = e.currentTarget.sink;
+        this.$.testSink.params = { sink };
+        this.$.testSink.execute().then((result) => {
+          this._toast(result.ok
+            ? this._msg('testOk', sink, result.durationMs)
+            : this._msg('testFailed', sink, result.message));
+          this._loadSinks();
+        }).catch((err) => this._error(err));
+      },
+
+      _statusClass(sink) {
+        if (sink.failing) {
+          return 'failing';
+        }
+        return sink.lastSuccessAt ? '' : 'idle';
+      },
+
+      _statusText(sink) {
+        if (sink.failing) {
+          return this._msg('statusFailing');
+        }
+        return this._msg(sink.lastSuccessAt ? 'statusOk' : 'statusIdle');
+      },
+
+      _savedText(settings) {
+        if (!settings) {
+          return '';
+        }
+        return settings.fromDocument
+          ? this._msg('eventsSaved', settings.updatedBy, settings.updatedAt)
+          : this._msg('eventsDefault');
+      },
+
+      _msg(key, ...args) {
+        return args.reduce((text, arg, i) => text.replace(`{${i}}`, arg), this._messages[key] || key);
+      },
+
+      _toast(text) {
+        this.$.toast.text = text;
+        this.$.toast.open();
+      },
+
+      _error(e) {
+        this._toast(this._msg('error', (e && e.message) || e));
+      },
+    });
+  </script>
+</dom-module>

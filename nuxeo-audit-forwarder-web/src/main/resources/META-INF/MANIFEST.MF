@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Nuxeo Audit Forwarder Web UI
+Bundle-SymbolicName: io.maretha.audit.forwarder.web;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-Vendor: Maretha
+Bundle-ActivationPolicy: lazy
+Nuxeo-Component: OSGI-INF/audit-forwarder-web-resources.xml

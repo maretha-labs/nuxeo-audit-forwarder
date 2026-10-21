@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fragment version="1">
+  <!-- no require on org.nuxeo.web.ui: the add-on must also start on servers without the Web UI, where the page is
+       simply never loaded. Labels are inline, so no i18n file has to be merged. -->
+  <install>
+    <unzip from="${bundle.fileName}" to="/" prefix="web">
+      <include>web/nuxeo.war/**</include>
+    </unzip>
+  </install>
+</fragment>

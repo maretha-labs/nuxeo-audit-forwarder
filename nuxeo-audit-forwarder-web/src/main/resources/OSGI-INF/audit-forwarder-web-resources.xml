@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="io.maretha.audit.forwarder.web.resources">
+  <extension target="org.nuxeo.ecm.platform.WebResources" point="resources">
+    <resource name="audit-forwarder-bundle.html" type="import" shrinkable="false">
+      <uri>/ui/audit-forwarder-bundle.html</uri>
+    </resource>
+  </extension>
+  <extension target="org.nuxeo.ecm.platform.WebResources" point="bundles">
+    <bundle name="web-ui">
+      <resources append="true">
+        <resource>audit-forwarder-bundle.html</resource>
+      </resources>
+    </bundle>
+  </extension>
+</component>

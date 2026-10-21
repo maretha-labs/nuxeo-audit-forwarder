@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Nuxeo Audit Forwarder Core
+Bundle-SymbolicName: io.maretha.audit.forwarder.core;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-Vendor: Maretha
+Bundle-ActivationPolicy: lazy
+Nuxeo-Component: OSGI-INF/audit-forwarder-service.xml,
+ OSGI-INF/audit-forwarder-config.xml,
+ OSGI-INF/audit-forwarder-sinks.xml,
+ OSGI-INF/audit-forwarder-types.xml,
+ OSGI-INF/audit-forwarder-stream.xml,
+ OSGI-INF/audit-forwarder-operations.xml,
+ OSGI-INF/audit-forwarder-probe.xml

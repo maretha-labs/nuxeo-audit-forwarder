@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<component name="io.maretha.audit.forwarder.sinks" version="1.0">
+
+  <require>io.maretha.audit.forwarder.AuditForwarderService</require>
+
+  <extension target="io.maretha.audit.forwarder.AuditForwarderService" point="sinkTypes">
+    <sinkType name="splunk" factory="io.maretha.audit.forwarder.sink.SplunkHecSink$Factory" />
+    <sinkType name="qradar" factory="io.maretha.audit.forwarder.sink.QRadarSink$Factory" />
+    <sinkType name="sentinel" factory="io.maretha.audit.forwarder.sink.SentinelSink$Factory" />
+    <sinkType name="syslog" factory="io.maretha.audit.forwarder.sink.SyslogSink$Factory" />
+    <sinkType name="webhook" factory="io.maretha.audit.forwarder.sink.WebhookSink$Factory" />
+    <sinkType name="sqs" factory="io.maretha.audit.forwarder.sink.SqsSink$Factory" />
+  </extension>
+
+</component>

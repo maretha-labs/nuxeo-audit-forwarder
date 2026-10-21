@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<xs:schema targetNamespace="http://maretha.io/nuxeo/schemas/audit-forwarder-settings/"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:nxs="http://maretha.io/nuxeo/schemas/audit-forwarder-settings/">
+
+  <!-- the forwarded event selection; credentials never live here -->
+  <xs:element name="events" type="nxs:stringList" />
+  <xs:element name="updatedAt" type="xs:dateTime" />
+  <xs:element name="updatedBy" type="xs:string" />
+
+  <xs:simpleType name="stringList">
+    <xs:list itemType="xs:string" />
+  </xs:simpleType>
+
+</xs:schema>

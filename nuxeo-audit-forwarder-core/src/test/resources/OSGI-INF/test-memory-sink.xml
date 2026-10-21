@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<component name="io.maretha.audit.forwarder.test.memory">
+
+  <require>io.maretha.audit.forwarder.sinks</require>
+
+  <extension target="io.maretha.audit.forwarder.AuditForwarderService" point="sinkTypes">
+    <sinkType name="memory" factory="io.maretha.audit.forwarder.MemorySink$Factory" />
+  </extension>
+
+</component>

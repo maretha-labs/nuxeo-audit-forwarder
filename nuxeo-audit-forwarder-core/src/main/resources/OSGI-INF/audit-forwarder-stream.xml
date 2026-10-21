@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<component name="io.maretha.audit.forwarder.stream" version="1.0">
+
+  <documentation>
+    Reads the audit stream (audit/audit) with one computation per sink, each in its own consumer group, beside
+    Nuxeo's audit writer. The codec must be the one the audit stream is written with.
+  </documentation>
+
+  <require>org.nuxeo.audit.listener.StreamAuditEventListener</require>
+  <require>io.maretha.audit.forwarder.config</require>
+
+  <extension target="org.nuxeo.runtime.stream.service" point="streamProcessor">
+    <streamProcessor name="auditForwarder" defaultConcurrency="1" defaultPartitions="1"
+                     defaultCodec="${nuxeo.stream.audit.log.codec:=legacy}"
+                     class="io.maretha.audit.forwarder.stream.AuditForwarderTopology"
+                     enabled="${maretha.audit.forwarder.enabled:=false}">
+      <!-- sinks retry on their own (retry.* settings); this policy only covers unexpected errors -->
+      <policy name="default" batchCapacity="${maretha.audit.forwarder.stream.batch.size:=100}"
+              batchThreshold="${maretha.audit.forwarder.stream.batch.threshold.ms:=500}ms" maxRetries="20" delay="1s"
+              maxDelay="60s" continueOnFailure="false" />
+    </streamProcessor>
+  </extension>
+
+</component>

@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<component name="io.maretha.audit.forwarder.AuditForwarderService" version="1.0">
+
+  <documentation>
+    Forwards Nuxeo audit events to the sinks declared in nuxeo.conf. Configuration is contributed by
+    audit-forwarder-config.xml; built-in sink types by audit-forwarder-sinks.xml.
+  </documentation>
+
+  <implementation class="io.maretha.audit.forwarder.AuditForwarderComponent" />
+
+  <service>
+    <provide interface="io.maretha.audit.forwarder.AuditForwarderService" />
+  </service>
+
+  <extension-point name="configuration">
+    <documentation>
+      Single forwarder configuration. A later contribution replaces the earlier one.
+    </documentation>
+    <object class="io.maretha.audit.forwarder.AuditForwarderDescriptor" />
+  </extension-point>
+
+  <extension-point name="sinkTypes">
+    <documentation>
+      Maps a sink type, as written in maretha.audit.forwarder.sink.&lt;name&gt;.type, to the
+      io.maretha.audit.forwarder.sink.AuditSinkFactory that builds it. Contribute your own to add a destination:
+      <code>
+        <sinkType name="mysiem" factory="com.example.MySiemSink$Factory" />
+      </code>
+    </documentation>
+    <object class="io.maretha.audit.forwarder.SinkTypeDescriptor" />
+  </extension-point>
+
+</component>

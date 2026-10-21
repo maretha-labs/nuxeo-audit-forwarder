@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Nuxeo Audit Forwarder Core Tests
+Bundle-SymbolicName: io.maretha.audit.forwarder.core.tests;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-Vendor: Maretha

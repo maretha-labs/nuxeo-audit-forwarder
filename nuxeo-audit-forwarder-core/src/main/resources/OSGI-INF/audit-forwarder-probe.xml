@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<component name="io.maretha.audit.forwarder.probe" version="1.0">
+
+  <require>org.nuxeo.ecm.core.management.contribs</require>
+
+  <extension target="org.nuxeo.ecm.core.management.CoreManagementComponent" point="probes">
+    <probe name="auditForwarderStatus" class="io.maretha.audit.forwarder.AuditForwarderProbe">
+      <label>Audit forwarder</label>
+      <description>Fails while the latest delivery attempt of a sink failed</description>
+    </probe>
+  </extension>
+
+  <extension target="org.nuxeo.ecm.core.management.CoreManagementComponent" point="healthCheck">
+    <probe name="auditForwarderStatus" enabled="${maretha.audit.forwarder.health.check.enabled:=false}" />
+  </extension>
+
+</component>

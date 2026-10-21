@@ -1,0 +1,84 @@
+<project name="nuxeo-audit-forwarder-package" default="build" xmlns:nx="urn:nuxeo-build"
+         xmlns:artifact="urn:nuxeo-artifact">
+  <taskdef resource="org/nuxeo/build/antlib.xml" uri="urn:nuxeo-build" />
+  <taskdef resource="org/nuxeo/build/artifact/antlib.xml" uri="urn:nuxeo-artifact" />
+
+  <target name="build">
+    <property name="outdir" value="${maven.project.build.directory}" />
+    <property name="package.dir" value="${outdir}/marketplace" />
+    <artifact:nuxeo-expand includeTestScope="false" groupPrefixes="io.maretha.audit,org.nuxeo" />
+
+    <delete failonerror="false" dir="${outdir}/nxr" />
+    <delete failonerror="false" dir="${package.dir}" />
+    <copy todir="${package.dir}">
+      <fileset dir="src/main/resources" />
+      <filterset>
+        <filter token="VERSION" value="${maven.project.version}" />
+      </filterset>
+    </copy>
+    <copy file="../LICENSE" tofile="${package.dir}/license.txt" />
+
+    <!-- the server distribution this package installs on -->
+    <copy todir="${outdir}">
+      <artifact:file key="org.nuxeo.ecm.distribution:nuxeo-nxr-server::zip" />
+      <mapper type="merge" to="nuxeo-nxr-server.zip" />
+    </copy>
+
+    <!-- every bundle and library the add-on needs at runtime -->
+    <copy todir="${outdir}/nxr/bundles" overwrite="true">
+      <artifact:set>
+        <includes>
+          <artifact groupId="io.maretha.audit" />
+          <artifact groupId="org.nuxeo*" />
+        </includes>
+        <excludes>
+          <artifact groupId="${maven.project.groupId}" artifactId="${maven.project.artifactId}" />
+          <artifact groupId="org.nuxeo.build*" />
+          <artifact groupId="org.nuxeo.lib*" />
+          <artifact groupId="org.nuxeo.packages*" />
+          <artifact scope="test" />
+          <artifact scope="provided" />
+          <artifact type="pom" />
+        </excludes>
+      </artifact:set>
+    </copy>
+    <copy todir="${outdir}/nxr/lib" overwrite="true">
+      <artifact:set>
+        <includes>
+          <artifact groupId="!org.nuxeo*" />
+          <artifact groupId="org.nuxeo.lib*" />
+        </includes>
+        <excludes>
+          <artifact groupId="io.maretha.audit" />
+          <artifact scope="test" />
+          <artifact scope="provided" />
+          <artifact type="pom" />
+        </excludes>
+      </artifact:set>
+    </copy>
+    <nx:rmdups dir="${outdir}/nxr/lib" />
+    <zip destfile="${outdir}/nxr.zip" basedir="${outdir}/nxr" />
+
+    <!-- keep only what the server distribution lacks -->
+    <nx:zipdiff file1="${outdir}/nxr.zip" file2="${outdir}/nuxeo-nxr-server.zip" ignoreContent="true"
+                includesfile="${outdir}/includes" excludesfile="${outdir}/excludesfile"
+                patternsetid="package.versus.server" />
+    <unzip src="${outdir}/nxr.zip" dest="${package.dir}/install">
+      <patternset refid="package.versus.server" />
+    </unzip>
+
+    <!-- notices: this project's, then the AWS SDK's, read verbatim from a shipped jar -->
+    <concat destfile="${package.dir}/NOTICE.txt" fixlastline="yes">
+      <file file="../NOTICE" />
+      <string>${line.separator}This package bundles the AWS SDK for Java 2.x, whose notice follows.${line.separator}${line.separator}</string>
+      <zipentry zipfile="${package.dir}/install/lib/sdk-core-${aws.version}.jar" name="META-INF/NOTICE.txt" />
+    </concat>
+
+    <zip destfile="${outdir}/${maven.project.artifactId}-${maven.project.version}.zip" basedir="${package.dir}" />
+    <artifact:attach file="${outdir}/${maven.project.artifactId}-${maven.project.version}.zip" type="zip" />
+
+    <delete dir="${outdir}/nxr" failonerror="false" />
+    <delete file="${outdir}/nxr.zip" failonerror="false" />
+    <delete file="${outdir}/nuxeo-nxr-server.zip" failonerror="false" />
+  </target>
+</project>
