@@ -6,7 +6,7 @@
     Nuxeo's audit writer. The codec must be the one the audit stream is written with.
   </documentation>
 
-  <require>org.nuxeo.audit.listener.StreamAuditEventListener</require>
+  <require>org.nuxeo.ecm.platform.audit.service.NXAuditEventsService</require>
   <require>io.maretha.audit.forwarder.config</require>
 
   <extension target="org.nuxeo.runtime.stream.service" point="streamProcessor">

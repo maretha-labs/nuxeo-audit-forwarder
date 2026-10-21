@@ -4,19 +4,28 @@
  */
 package io.maretha.audit.forwarder.transport;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+
 import java.net.URI;
 import java.time.Duration;
 
+import org.nuxeo.common.Environment;
 import org.nuxeo.runtime.api.Framework;
 import org.nuxeo.runtime.aws.AWSConfigurationService;
-import org.nuxeo.runtime.aws.NuxeoAWSCredentialsProvider;
 import org.nuxeo.runtime.aws.NuxeoAWSRegionProvider;
+
+import com.amazonaws.ClientConfiguration;
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSSessionCredentials;
 
 import io.maretha.audit.forwarder.config.SinkSettings;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
+import software.amazon.awssdk.http.apache.ProxyConfiguration;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sts.StsClient;
@@ -27,8 +36,13 @@ import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
  * Builds AWS SDK clients the way Nuxeo builds its own: credentials, region and TLS from {@code nuxeo-runtime-aws}
  * (falling back to the AWS default chains), optionally a role assumed through AWS STS. Static keys in the sink
  * settings take precedence when both are set.
+ * <p>
+ * On LTS 2023 {@code nuxeo-runtime-aws} is written for AWS SDK v1: its settings are carried over to these SDK v2
+ * clients the way Nuxeo 2025 applies them.
  */
 public class AwsClients implements AutoCloseable {
+
+    protected static final AwsCredentialsProvider DEFAULT_CREDENTIALS = DefaultCredentialsProvider.builder().build();
 
     protected final SqsClient sqs;
 
@@ -82,7 +96,7 @@ public class AwsClients implements AutoCloseable {
         if (region != null) {
             return Region.of(region);
         }
-        Region fromNuxeo = runtimeAvailable() ? new NuxeoAWSRegionProvider(configId).getRegion() : null;
+        Region fromNuxeo = runtimeAvailable() ? Region.of(new NuxeoAWSRegionProvider(configId).getRegion()) : null;
         if (fromNuxeo == null) {
             throw settings.invalid("no AWS region: set " + settings.key("region") + " or nuxeo.aws.region");
         }
@@ -96,7 +110,24 @@ public class AwsClients implements AutoCloseable {
             return StaticCredentialsProvider.create(
                     AwsBasicCredentials.create(settings.require("access.key.id"), settings.require("secret.access.key")));
         }
-        return configId == null ? NuxeoAWSCredentialsProvider.getInstance() : new NuxeoAWSCredentialsProvider(configId);
+        return nuxeoCredentials(configId);
+    }
+
+    /** The nuxeo.conf AWS configuration, else the SDK v2 default chain: Nuxeo 2025's provider, over the v1 service. */
+    protected static AwsCredentialsProvider nuxeoCredentials(String configId) {
+        return () -> {
+            AWSConfigurationService service = runtimeAvailable() ? Framework.getService(AWSConfigurationService.class)
+                    : null;
+            AWSCredentials credentials = service == null ? null : service.getAWSCredentials(configId);
+            if (credentials == null) {
+                return DEFAULT_CREDENTIALS.resolveCredentials();
+            }
+            if (credentials instanceof AWSSessionCredentials session) {
+                return AwsSessionCredentials.create(session.getAWSAccessKeyId(), session.getAWSSecretKey(),
+                        session.getSessionToken());
+            }
+            return AwsBasicCredentials.create(credentials.getAWSAccessKeyId(), credentials.getAWSSecretKey());
+        };
     }
 
     protected static ApacheHttpClient.Builder httpClient(SinkSettings settings, String configId) {
@@ -108,15 +139,40 @@ public class AwsClients implements AutoCloseable {
                 : null;
         if (service != null) {
             if (settings.getBoolean("proxy", false)) {
-                service.configureProxy(builder);
+                configureProxy(builder);
             }
+            // the v1 service builds the TLS socket factory on a v1 configuration; both SDKs use Apache HttpClient 4
+            ClientConfiguration v1 = new ClientConfiguration();
             if (configId == null) {
-                service.configureSSL(builder);
+                service.configureSSL(v1);
             } else {
-                service.configureSSL(configId, builder);
+                service.configureSSL(configId, v1);
+            }
+            var socketFactory = v1.getApacheHttpClientConfig().getSslSocketFactory();
+            if (socketFactory != null) {
+                builder.socketFactory(socketFactory);
             }
         }
         return builder;
+    }
+
+    /** The nuxeo.http.proxy.* settings, as Nuxeo 2025's {@code AWSConfigurationService.configureProxy} reads them. */
+    protected static void configureProxy(ApacheHttpClient.Builder builder) {
+        String proxyHost = Framework.getProperty(Environment.NUXEO_HTTP_PROXY_HOST);
+        String proxyPort = Framework.getProperty(Environment.NUXEO_HTTP_PROXY_PORT);
+        String proxyLogin = Framework.getProperty(Environment.NUXEO_HTTP_PROXY_LOGIN);
+        String proxyPassword = Framework.getProperty(Environment.NUXEO_HTTP_PROXY_PASSWORD);
+        var config = ProxyConfiguration.builder();
+        if (isNotBlank(proxyHost) && isNotBlank(proxyPort)) {
+            config.endpoint(URI.create("http://" + proxyHost.toLowerCase() + ":" + proxyPort));
+        }
+        if (isNotBlank(proxyLogin)) {
+            config.username(proxyLogin);
+        }
+        if (proxyPassword != null) { // could be blank
+            config.password(proxyPassword);
+        }
+        builder.proxyConfiguration(config.build());
     }
 
     protected static boolean runtimeAvailable() {

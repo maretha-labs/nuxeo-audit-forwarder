@@ -1,6 +1,6 @@
 name: build
 
-# manual only: the build needs access to the Nuxeo LTS 2025 Maven artifacts
+# manual only: the build needs access to the Nuxeo LTS 2023 Maven artifacts
 on:
   workflow_dispatch:
 
@@ -12,7 +12,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '17'
           cache: maven
       # TestSqsSink is skipped without a LOCALSTACK_AUTH_TOKEN secret
       - run: mvn -B -nsu verify

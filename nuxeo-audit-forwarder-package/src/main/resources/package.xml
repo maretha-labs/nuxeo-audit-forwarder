@@ -13,7 +13,7 @@
   <supported>false</supported>
   <target-platform>
     <name>lts</name>
-    <version>[2025.0,2027.0)</version>
+    <version>[2023.0,2024.0)</version>
   </target-platform>
   <license>Apache License, Version 2.0</license>
   <license-url>https://www.apache.org/licenses/LICENSE-2.0</license-url>

@@ -6,13 +6,13 @@ package io.maretha.audit.forwarder.operation;
 
 import java.util.TreeSet;
 
-import org.nuxeo.audit.service.AuditService;
 import org.nuxeo.ecm.automation.core.Constants;
 import org.nuxeo.ecm.automation.core.annotations.Context;
 import org.nuxeo.ecm.automation.core.annotations.Operation;
 import org.nuxeo.ecm.automation.core.annotations.OperationMethod;
 import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.CoreSession;
+import org.nuxeo.ecm.platform.audit.api.AuditLogger;
 
 @Operation(id = ListAuditableEvents.ID, category = Constants.CAT_SERVICES,
         label = "Audit Forwarder: list auditable events",
@@ -25,7 +25,7 @@ public class ListAuditableEvents {
     protected CoreSession session;
 
     @Context
-    protected AuditService auditService;
+    protected AuditLogger auditService;
 
     @OperationMethod
     public Blob run() {

@@ -13,7 +13,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
-import jakarta.inject.Inject;
+import javax.inject.Inject;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -25,6 +25,7 @@ import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.CoreInstance;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
+import org.nuxeo.ecm.platform.audit.AuditFeature;
 import org.nuxeo.runtime.test.runner.Deploy;
 import org.nuxeo.runtime.test.runner.Features;
 import org.nuxeo.runtime.test.runner.FeaturesRunner;
@@ -44,8 +45,7 @@ import io.maretha.audit.forwarder.sink.SinkStatus;
  * End to end inside Nuxeo: document events go through the audit stream to two sinks, one of which is down.
  */
 @RunWith(FeaturesRunner.class)
-@Features(AutomationFeature.class)
-@Deploy("org.nuxeo.ecm.platform.audit")
+@Features({ AutomationFeature.class, AuditFeature.class })
 @Deploy("io.maretha.audit.forwarder.core:OSGI-INF/audit-forwarder-service.xml")
 @Deploy("io.maretha.audit.forwarder.core:OSGI-INF/audit-forwarder-config.xml")
 @Deploy("io.maretha.audit.forwarder.core:OSGI-INF/audit-forwarder-sinks.xml")
@@ -53,7 +53,6 @@ import io.maretha.audit.forwarder.sink.SinkStatus;
 @Deploy("io.maretha.audit.forwarder.core:OSGI-INF/audit-forwarder-stream.xml")
 @Deploy("io.maretha.audit.forwarder.core:OSGI-INF/audit-forwarder-operations.xml")
 @Deploy("io.maretha.audit.forwarder.core.tests:OSGI-INF/test-memory-sink.xml")
-@WithFrameworkProperty(name = "nuxeo.audit.backend.default.factory", value = "org.nuxeo.audit.mem.MemAuditBackendFactory")
 @WithFrameworkProperty(name = "maretha.audit.forwarder.enabled", value = "true")
 @WithFrameworkProperty(name = "maretha.audit.forwarder.sinks", value = "good,down")
 @WithFrameworkProperty(name = "maretha.audit.forwarder.sink.good.type", value = "memory")

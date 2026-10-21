@@ -1,6 +1,6 @@
 # Nuxeo Audit Forwarder
 
-Nuxeo LTS 2025 add-on that forwards **audit events** (logins, document changes, permission changes, downloads and
+Nuxeo LTS 2023 add-on that forwards **audit events** (logins, document changes, permission changes, downloads and
 any other audited event) to security and data platforms:
 
 | Sink type | Destination | Transport | Authentication |
@@ -53,12 +53,12 @@ Empty fields are omitted.
 
 ## Requirements
 
-- Nuxeo LTS 2025 (package target `[2025.0,2027.0)`), Java 21. Built and tested against `nuxeo-parent` 2025.26.
-  LTS 2026 is inside the target range but has not been built or tested against.
-  The LTS 2023 version is on the `2023` branch.
+- Nuxeo LTS 2023 (package target `[2023.0,2024.0)`), Java 17. Built and tested against `nuxeo-parent` 2023.54.
+  The LTS 2025 version is on the `2025` branch.
 - The Web UI page needs the Nuxeo Web UI package; without it the add-on runs and the page is simply absent.
-- The package bundles `nuxeo-runtime-aws` and the AWS SDK for Java 2.x (about 11 MB), which the server
-  distribution does not ship.
+- The package bundles `nuxeo-runtime-aws` with the AWS SDK for Java 1.x core it needs on LTS 2023, and the AWS SDK
+  for Java 2.x (about 7 MB in all), which the server distribution does not ship. The SQS sink uses SDK 2.x and takes
+  credentials, region and TLS from the Nuxeo AWS configuration as on LTS 2025.
 
 ## Build and install
 
@@ -67,7 +67,7 @@ mvn install
 nuxeoctl mp-install nuxeo-audit-forwarder-package/target/nuxeo-audit-forwarder-package-1.0.0-SNAPSHOT.zip
 ```
 
-The build needs access to the Nuxeo LTS 2025 Maven artifacts. `TestSqsSink` runs against LocalStack with
+The build needs access to the Nuxeo LTS 2023 Maven artifacts. `TestSqsSink` runs against LocalStack with
 Testcontainers; it is skipped without Docker or without a `LOCALSTACK_AUTH_TOKEN` environment variable (current
 LocalStack images require one). Override the image with `-Dlocalstack.image=...`.
 
@@ -325,9 +325,11 @@ These are the known trade-offs. Read them before deploying.
   (Splunk HEC, Sentinel token and upload, webhook with every authentication mode and HMAC, QRadar HTTPS), syslog
   over TCP, UDP and mutual TLS against local sockets, SQS against LocalStack (standard and FIFO), and a Nuxeo
   runtime test of the stream path, sink isolation, the event selection and the operations.
-- Manual check on a Nuxeo 2025.26 server (in-memory stream and audit backend): every sink type delivered events to
-  local stand-in receivers and LocalStack, a receiver restart caused no loss, and the probe and operations behaved
-  as described.
+- On LTS 2023 the automated tests pass against `nuxeo-parent` 2023.54, with the SQL audit backend; `TestSqsSink`
+  has not yet run against LocalStack on this branch.
+- Manual check on a Nuxeo 2025.26 server with the LTS 2025 build (in-memory stream and audit backend): every sink
+  type delivered events to local stand-in receivers and LocalStack, a receiver restart caused no loss, and the probe
+  and operations behaved as described. Not yet repeated on an LTS 2023 server.
 - Not tested against real Splunk, IBM QRadar or Microsoft Sentinel instances, against Kafka-backed streams, in a
   cluster, or with Nuxeo encrypted configuration values. The Web UI page has not been exercised in a browser.
 

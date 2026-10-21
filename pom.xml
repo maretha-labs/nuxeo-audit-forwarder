@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.nuxeo</groupId>
     <artifactId>nuxeo-parent</artifactId>
-    <version>2025.26</version>
+    <version>2023.54</version>
   </parent>
 
   <groupId>io.maretha.audit</groupId>
@@ -19,10 +19,12 @@
 
   <properties>
     <nuxeo.skip.enforcer>true</nuxeo.skip.enforcer>
-    <nuxeo.target.version>2025.*</nuxeo.target.version>
-    <maven.compiler.release>21</maven.compiler.release>
+    <nuxeo.target.version>2023.*</nuxeo.target.version>
+    <maven.compiler.release>17</maven.compiler.release>
     <!-- not managed by the Nuxeo BOM -->
     <testcontainers.version>2.0.5</testcontainers.version>
+    <!-- the 2023 BOM manages AWS SDK v1 only; same v2 release as nuxeo-parent 2025.26 -->
+    <aws.sdk2.version>2.55.2</aws.sdk2.version>
   </properties>
 
   <modules>
@@ -42,6 +44,13 @@
         <groupId>io.maretha.audit</groupId>
         <artifactId>nuxeo-audit-forwarder-web</artifactId>
         <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>software.amazon.awssdk</groupId>
+        <artifactId>bom</artifactId>
+        <version>${aws.sdk2.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>

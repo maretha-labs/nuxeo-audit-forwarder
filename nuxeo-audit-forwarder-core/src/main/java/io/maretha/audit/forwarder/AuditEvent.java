@@ -15,7 +15,7 @@ import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.nuxeo.audit.api.LogEntry;
+import org.nuxeo.ecm.platform.audit.api.LogEntry;
 
 /**
  * One audit log entry, normalized for every sink. Times are UTC instants; formatters render them as ISO-8601.
@@ -34,8 +34,9 @@ public record AuditEvent(String id, String eventId, String category, Instant eve
         Instant eventDate = toInstant(entry.getEventDate());
         Instant logDate = toInstant(entry.getLogDate());
         Map<String, Object> extended = new LinkedHashMap<>();
-        if (entry.getExtended() != null) {
-            entry.getExtended().forEach((key, value) -> {
+        if (entry.getExtendedInfos() != null) {
+            entry.getExtendedInfos().forEach((key, info) -> {
+                Object value = info == null ? null : info.getSerializableValue();
                 if (value != null) {
                     extended.put(key, value);
                 }

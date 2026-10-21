@@ -5,7 +5,7 @@
 package io.maretha.audit.forwarder.stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.nuxeo.audit.listener.StreamAuditEventListener.STREAM_NAME;
+import static org.nuxeo.ecm.platform.audit.listener.StreamAuditEventListener.STREAM_NAME;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -14,16 +14,17 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.nuxeo.audit.api.LogEntry;
 import org.nuxeo.ecm.core.api.NuxeoException;
-import org.nuxeo.ecm.core.io.registry.MarshallerHelper;
-import org.nuxeo.ecm.core.io.registry.context.RenderingContext;
+import org.nuxeo.ecm.platform.audit.api.LogEntry;
+import org.nuxeo.ecm.platform.audit.impl.LogEntryImpl;
 import org.nuxeo.lib.stream.computation.AbstractBatchComputation;
 import org.nuxeo.lib.stream.computation.ComputationContext;
 import org.nuxeo.lib.stream.computation.Record;
 import org.nuxeo.lib.stream.computation.Topology;
 import org.nuxeo.runtime.api.Framework;
 import org.nuxeo.runtime.stream.StreamProcessorTopology;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.maretha.audit.forwarder.AuditEvent;
 import io.maretha.audit.forwarder.AuditForwarderService;
@@ -51,6 +52,8 @@ public class AuditForwarderTopology implements StreamProcessorTopology {
     public static class ForwardComputation extends AbstractBatchComputation {
 
         private static final Logger log = LogManager.getLogger(ForwardComputation.class);
+
+        private static final ObjectMapper MAPPER = new ObjectMapper();
 
         protected final String sink;
 
@@ -85,10 +88,11 @@ public class AuditForwarderTopology implements StreamProcessorTopology {
             // logged by AbstractBatchComputation; the stream policy retries the batch
         }
 
+        // LTS 2023 has no LogEntry JSON reader: decode the way its StreamAuditWriter does
         protected LogEntry decode(byte[] data) {
             String json = new String(data, UTF_8);
             try {
-                return MarshallerHelper.jsonToObject(LogEntry.class, json, RenderingContext.CtxBuilder.get());
+                return MAPPER.readValue(json, LogEntryImpl.class);
             } catch (IOException e) {
                 throw new NuxeoException("Invalid audit log entry JSON", e);
             }

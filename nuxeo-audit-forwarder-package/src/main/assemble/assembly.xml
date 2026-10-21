@@ -71,7 +71,7 @@
     <concat destfile="${package.dir}/NOTICE.txt" fixlastline="yes">
       <file file="../NOTICE" />
       <string>${line.separator}This package bundles the AWS SDK for Java 2.x, whose notice follows.${line.separator}${line.separator}</string>
-      <zipentry zipfile="${package.dir}/install/lib/sdk-core-${aws.version}.jar" name="META-INF/NOTICE.txt" />
+      <zipentry zipfile="${package.dir}/install/lib/sdk-core-${aws.sdk2.version}.jar" name="META-INF/NOTICE.txt" />
     </concat>
 
     <zip destfile="${outdir}/${maven.project.artifactId}-${maven.project.version}.zip" basedir="${package.dir}" />
